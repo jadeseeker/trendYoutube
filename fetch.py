@@ -27,25 +27,91 @@ class apiYoutube:
 		print '================================================='
 		print category
 		print '================================================='
-		for search_result in infoList.get("items", []):
-			#videos.append("%s " % (search_result["snippet"]["title"]))
-			print count, '\t', search_result['snippet']['resourceId']['videoId'], '\t', \
-				unicodedata.normalize('NFKD', search_result['snippet']['title']).encode('ascii', 'ignore')
+		for search_result in infoList['items']:
+			vid = search_result['snippet']['resourceId']['videoId']
+			title = unicodedata.normalize('NFKD', 
+				search_result['snippet']['title']).encode('ascii', 'ignore') 
+			
+			print count, '\t', vid, '\t', title
 			count += 1
-			self.getMeta(search_result['snippet']['resourceId']['videoId'])
+			
+			self.getMeta(vid)
 
 
+	def subComments(self, cid):
+
+		results = self.youtube.comments().list(
+					part = "snippet",
+					parentId = cid,
+					textFormat = "plainText",
+					maxResults = 100
+				  ).execute()
+
+		for item in results["items"]:
+			#author = item["snippet"]["authorDisplayName"]
+			text = item["snippet"]["textDisplay"]
+			print '\t\t', text
+
+
+	def getComments(self,vid):
+
+		count = 0
+		flag = True
+		next_page_token = ''
+		try:
+
+			while flag == True: #count < 1 and flag == True:
+				results = self.youtube.commentThreads().list(
+						part = "snippet",
+						videoId = vid,
+						maxResults = 100,
+						textFormat = "plainText",
+						pageToken = next_page_token
+					).execute()
+				count+=1
+
+				if 'nextPageToken' in results:
+					next_page_token = results['nextPageToken']
+				else:
+					flag = False
+
+			print '========================================================================='
+			
+			for item in results["items"]:
+
+				comment = item["snippet"]["topLevelComment"]
+				cid = item['id']
+				#author = comment["snippet"]["authorDisplayName"]
+				text = unicodedata.normalize('NFKD', comment["snippet"]["textDisplay"]
+					).encode('ascii', 'ignore') 
+				reply = item["snippet"]["totalReplyCount"]
+
+				print text
+
+				if reply > 0:
+					#print cid, '\t', reply
+					self.subComments(cid)
+
+			print '==========================================================================\n'
+			
+		except:
+			print 'COMMENTS NOT AVAILABLE'
 
 	def getMeta(self, vid):
 
 		video_response = self.youtube.videos().list(
-			id=vid,
-			part='statistics'
+			id = vid,
+			part = 'statistics'
 		).execute()
 
-		for search_result in video_response.get("items", []):
-			for key in search_result.get('statistics', []):
+		
+		for search_result in video_response['items']:
+			for key in search_result['statistics']:
 				print '\t\t', key,' :', search_result['statistics'][key]
+				#pass
+		
+
+		self.getComments(vid)
 
 
 	def getVideos(self, category, pid):
@@ -57,10 +123,10 @@ class apiYoutube:
 
 		while count < 2 and flag == True:
 			playlist_response = self.youtube.playlistItems().list(
-				playlistId=pid,
-				part='id,snippet',
-				maxResults=50,
-				pageToken=next_page_token
+				playlistId = pid,
+				part = 'id,snippet',
+				maxResults = 50,
+				pageToken = next_page_token
 			).execute()
 			count += 1
 

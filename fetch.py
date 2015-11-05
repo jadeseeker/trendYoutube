@@ -21,36 +21,20 @@ class apiYoutube:
 			developerKey=DEVELOPER_KEY)
 
 
-	def printData(self,category, infoList):
-		videos = []
-		count = 0
-		print '================================================='
-		print category
-		print '================================================='
-		for search_result in infoList['items']:
-			vid = search_result['snippet']['resourceId']['videoId']
-			title = unicodedata.normalize('NFKD', 
-				search_result['snippet']['title']).encode('ascii', 'ignore') 
-			
-			print count, '\t', vid, '\t', title
-			count += 1
-			
-			self.getMeta(vid)
-
-
 	def subComments(self, cid):
 
 		results = self.youtube.comments().list(
 					part = "snippet",
 					parentId = cid,
 					textFormat = "plainText",
-					maxResults = 100
+					maxResults = 100,
+					fields = 'items(snippet/textDisplay)'
 				  ).execute()
-
+				
 		for item in results["items"]:
-			#author = item["snippet"]["authorDisplayName"]
 			text = item["snippet"]["textDisplay"]
-			print '\t\t', text
+			#print '\t\t\t\t', text[:10]
+		
 
 
 	def getComments(self,vid):
@@ -66,7 +50,8 @@ class apiYoutube:
 						videoId = vid,
 						maxResults = 100,
 						textFormat = "plainText",
-						pageToken = next_page_token
+						pageToken = next_page_token,
+						fields = 'items(id, snippet/totalReplyCount, snippet/topLevelComment/snippet/textDisplay)'
 					).execute()
 				count+=1
 
@@ -75,27 +60,24 @@ class apiYoutube:
 				else:
 					flag = False
 
-			print '========================================================================='
 			
 			for item in results["items"]:
-
 				comment = item["snippet"]["topLevelComment"]
 				cid = item['id']
-				#author = comment["snippet"]["authorDisplayName"]
+								
 				text = unicodedata.normalize('NFKD', comment["snippet"]["textDisplay"]
 					).encode('ascii', 'ignore') 
-				reply = item["snippet"]["totalReplyCount"]
+				
+				replyCount = item["snippet"]["totalReplyCount"]
 
-				print text
+				#print '\t\t\t', cid
 
-				if reply > 0:
-					#print cid, '\t', reply
+				if replyCount > 0:
 					self.subComments(cid)
 
-			print '==========================================================================\n'
-			
 		except:
 			print 'COMMENTS NOT AVAILABLE'
+
 
 	def getMeta(self, vid):
 
@@ -112,6 +94,23 @@ class apiYoutube:
 		
 
 		self.getComments(vid)
+
+
+	def printData(self,category, infoList):
+		videos = []
+		count = 0
+		print '================================================='
+		print category
+		print '================================================='
+		for search_result in infoList['items']:
+			vid = search_result['snippet']['resourceId']['videoId']
+			title = unicodedata.normalize('NFKD', 
+				search_result['snippet']['title']).encode('ascii', 'ignore') 
+			
+			print count, '\t', vid, '\t', title
+			count += 1
+			
+			self.getMeta(vid)
 
 
 	def getVideos(self, category, pid):
@@ -145,6 +144,7 @@ if __name__ == "__main__":
 
 	#global playlist
 	api = apiYoutube()
+	#api.getMeta('mQPjKSVe1tQ')
 	for key in playlist:
-		 api.getVideos(key,playlist[key])
+		api.getVideos(key,playlist[key])
 

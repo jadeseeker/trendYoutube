@@ -1,0 +1,9 @@
+﻿CREATE TYPE categories AS ENUM ('music', 'popular' , 'news', 'sports');
+
+CREATE TABLE Video(
+   vID character(11) PRIMARY KEY NOT NULL,
+   title text		NOT NULL,
+   duration bigint	NOT NULL,
+   category categories	NOT NULL,
+   publishedAt timestamp NOT NULL   
+);

@@ -1,0 +1,24 @@
+DROP TABLE DynamicData;
+DROP TABLE Video;
+
+CREATE TABLE Video(
+   vID character(11) PRIMARY KEY NOT NULL,
+   title text		NOT NULL,
+   duration bigint	NOT NULL,
+   category categories	NOT NULL,
+   publishedAt timestamp NOT NULL   
+);
+
+CREATE TABLE DynamicData(
+   extractionTime timestamp NOT NULL,
+   videoID character(11) REFERENCES Video (vID),
+   likeCount bigint		NOT NULL,
+   dislikeCount bigint		NOT NULL,
+   viewCount bigint		NOT NULL,
+   commentCount bigint		NOT NULL,
+   rank bigint			NOT NULL,
+   posSent bigint		NOT NULL,
+   neuSent bigint		NOT NULL,
+   negSent bigint		NOT NULL,
+   PRIMARY KEY (extractionTime, videoID)
+);

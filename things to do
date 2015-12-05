@@ -1,0 +1,11 @@
+things to do
+
+store fetched comment id and reply
+
+if comment not in DB, fetch else pass
+
+if comment count greater than before: fetch
+
+all irrelevant if cant only new comments
+
+stanford nlp api for sentiment

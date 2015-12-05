@@ -1,0 +1,85 @@
+-----------------------------------------------------------------------
+CONVERTING DATATYPE FROM TIMESTAMP TO TIMESTAMPTZ
+-----------------------------------------------------------------------
+BEGIN;
+SET LOCAL timezone='EST';
+ALTER TABLE dynamicdata ALTER extractiontime TYPE timestamptz;
+COMMIT;
+select * from dynamicdata;
+
+BEGIN;
+SET LOCAL timezone='EST';
+ALTER TABLE video ALTER publishedat TYPE timestamptz;
+COMMIT;
+select * from video;
+
+-----------------------------------------------------------------------
+Adding sys_period column in DynamicData table
+-----------------------------------------------------------------------
+ALTER TABLE dynamicdata
+ADD COLUMN sys_period tstzrange;
+
+-----------------------------------------------------------------------
+Modifying Current Data in DynamicData table
+-----------------------------------------------------------------------
+UPDATE dynamicdata DD1
+SET sys_period = tstzrange(
+DD1.extractiontime
+,
+(SELECT extractiontime FROM dynamicdata DD2 WHERE DD1.videoid=DD2.videoid AND DD2.extractiontime>DD1.extractiontime ORDER BY DD2.extractiontime ASC LIMIT 1)
+)
+
+-----------------------------------------------------------------------
+Creating history table
+-----------------------------------------------------------------------
+CREATE TABLE videodata_history (LIKE dynamicdata);
+
+-----------------------------------------------------------------------
+Copying old data (data that is to be archived) from DynamicData table to the history table
+-----------------------------------------------------------------------
+INSERT INTO videodata_history SELECT * FROM dynamicdata;
+DELETE FROM videodata_history WHERE sys_period @> LOCALTIMESTAMP::timestamptz;
+
+-----------------------------------------------------------------------
+Deleting old data from DynamicData table
+-----------------------------------------------------------------------
+DELETE FROM dynamicdata WHERE (extractiontime, videoid) in (SELECT extractiontime, videoid FROM videodata_history);
+
+TEMPORAL PART BEGINS
+-----------------------------------------------------------------------
+Adding a temporal extension and then
+Creating a trigger on DynamicData table
+-----------------------------------------------------------------------
+CREATE EXTENSION temporal_tables;
+
+CREATE TRIGGER versioning_trigger
+BEFORE INSERT OR UPDATE OR DELETE ON dynamicdata
+FOR EACH ROW EXECUTE PROCEDURE versioning(
+  'sys_period', 'videodata_history', true
+);
+-------------------------------------------------------------------------------------------------------
+CONVERT ALL INSERTIONS TO UPDATIONS IN THE PYTHON SCRIPT THAT FETCHES DATA (SEE EXAMPLE COMMAND BELOW)
+-------------------------------------------------------------------------------------------------------
+UPDATE DynamicData 
+SET extractionTime = LOCALTIMESTAMP, 
+	likeCount = 999, 
+	dislikeCount = 111, 
+	viewCount = 333, 
+	commentCount = 666, 
+	rank = 1, 
+	posSent = 1, neuSent = 1, negSent = 1,
+	sys_period = tstzrange(current_timestamp, null)
+WHERE videoID = 'YQHsXMglC9A';
+
+
+
+
+
+
+
+
+-----------------------------------------------------------------------
+Slick
+-----------------------------------------------------------------------
+Update all ranks to 1 where rank=0
+See to it that there are no 2500 '-1.0's

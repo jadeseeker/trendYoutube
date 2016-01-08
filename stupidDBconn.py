@@ -1,7 +1,7 @@
 import psycopg2
 
 def writeToDB():
-	conn = psycopg2.connect(database="mydb", user="postgres", password="harshit", host="127.0.0.1", port="5432")
+	conn = psycopg2.connect(database="mydb", user="postgres", password="password", host="127.0.0.1", port="5432")
 	print "Opened database successfully"
 	cur = conn.cursor()
 	cur.execute('''CREATE TABLE COMPANY

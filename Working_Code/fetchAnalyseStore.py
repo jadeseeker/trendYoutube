@@ -14,7 +14,7 @@ class apiYoutube:
 
 	def __init__(self):
 
-		DEVELOPER_KEY = "AIzaSyBLMlgZ-8BpNJX-jaDX0vPd4V9l7uisLaU"
+		DEVELOPER_KEY = #"google api key"
 		YOUTUBE_API_SERVICE_NAME = "youtube"
 		YOUTUBE_API_VERSION = "v3"
 
